@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:testapp/screens/first_screen.dart';
 import 'package:testapp/screens/reloader_screen.dart';
 import 'screens/pair_screen.dart';
