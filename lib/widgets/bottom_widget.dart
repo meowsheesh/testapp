@@ -4,11 +4,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:testapp/screens/first_screen.dart';
 import 'package:testapp/strings.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
 class NewWidget extends StatefulWidget {
   NewWidget({Key? key, required this.controller, required this.notifyParent}) : super(key: key);
-  final WebViewController controller;
+  final PlatformWebViewController controller;
   final Function() notifyParent;
 
   @override
