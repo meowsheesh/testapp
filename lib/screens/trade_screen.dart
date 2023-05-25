@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:testapp/widgets/bottom_widget.dart';
 import 'package:testapp/screens/first_screen.dart';
 import 'package:testapp/strings.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+// import 'package:webview_flutter/webview_flutter.dart';
+// import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 class TradeScreen extends StatefulWidget {
   const TradeScreen({Key? key}) : super(key: key);
@@ -13,7 +15,7 @@ class TradeScreen extends StatefulWidget {
 }
 
 class _TradeScreenState extends State<TradeScreen> {
-  late final WebViewController controller;
+  late final PlatformWebViewController controller;
 
   @override
   void initState() {
@@ -21,66 +23,71 @@ class _TradeScreenState extends State<TradeScreen> {
     balance = 10000;
     pair = 'EURUSD';
 
-    late final PlatformWebViewControllerCreationParams params;
-    params = const PlatformWebViewControllerCreationParams();
-
-    final WebViewController wcontroller =
-    WebViewController.fromPlatformCreationParams(params);
-
-    wcontroller
+    controller = PlatformWebViewController(
+      WebKitWebViewControllerCreationParams(allowsInlineMediaPlayback: true),
+    )
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
+      ..setPlatformNavigationDelegate(
+        PlatformNavigationDelegate(
+          const PlatformNavigationDelegateCreationParams(),
+        )
+          ..setOnProgress((int progress) {
             debugPrint('WebView is loading (progress : $progress%)');
-          },
-          onPageStarted: (String url) {
+          })
+          ..setOnPageStarted((String url) {
             debugPrint('Page started loading: $url');
-          },
-          onPageFinished: (String url) {
+          })
+          ..setOnPageFinished((String url) {
             debugPrint('Page finished loading: $url');
-          },
-          onWebResourceError: (WebResourceError error) {
+          })
+          ..setOnWebResourceError((WebResourceError error) {
             debugPrint('''
-              Page resource error:
-                code: ${error.errorCode}
-                description: ${error.description}
-                errorType: ${error.errorType}
-                isForMainFrame: ${error.isForMainFrame}
-            ''');
-          },
-          onNavigationRequest: (NavigationRequest request) {
+Page resource error:
+  code: ${error.errorCode}
+  description: ${error.description}
+  errorType: ${error.errorType}
+  isForMainFrame: ${error.isForMainFrame}
+          ''');
+          })
+          ..setOnNavigationRequest((NavigationRequest request) {
             if (request.url.startsWith('https://www.youtube.com/')) {
               debugPrint('blocking navigation to ${request.url}');
               return NavigationDecision.prevent;
             }
             debugPrint('allowing navigation to ${request.url}');
             return NavigationDecision.navigate;
-          },
-          onUrlChange: (UrlChange change) {
+          })
+          ..setOnUrlChange((UrlChange change) {
             debugPrint('url change to ${change.url}');
-          },
-        ),
+          }),
       )
-      ..addJavaScriptChannel(
-        'Toaster',
+      ..addJavaScriptChannel(JavaScriptChannelParams(
+        name: 'Toaster',
         onMessageReceived: (JavaScriptMessage message) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message.message)),
           );
         },
+      ))
+      ..setOnPlatformPermissionRequest(
+            (PlatformWebViewPermissionRequest request) {
+          debugPrint(
+            'requesting permissions for ${request.types.map((WebViewPermissionResourceType type) => type.name)}',
+          );
+          request.grant();
+        },
       )
       ..loadHtmlString(widgetCode(pair));
-
-    // #docregion platform_features
-    if (wcontroller.platform is AndroidWebViewController) {
-      AndroidWebViewController.enableDebugging(true);
-      (wcontroller.platform as AndroidWebViewController)
-          .setMediaPlaybackRequiresUserGesture(false);
-    }
-
-    controller = wcontroller;
+    //
+    // // #docregion platform_features
+    // if (wcontroller.platform is AndroidWebViewController) {
+    //   AndroidWebViewController.enableDebugging(true);
+    //   (wcontroller.platform as AndroidWebViewController)
+    //       .setMediaPlaybackRequiresUserGesture(false);
+    // }
+    //
+    // controller = wcontroller;
   }
 
   @override
@@ -125,7 +132,10 @@ class _TradeScreenState extends State<TradeScreen> {
           Container(
               width: MediaQuery.of(context).size.width,
               height: 350,
-              child: WebViewWidget(controller: controller)),
+              child: PlatformWebViewWidget(
+                PlatformWebViewWidgetCreationParams(controller: controller),
+              ).build(context),
+              ),
           NewWidget(controller: controller, notifyParent: refresh, )
         ],
       ),
