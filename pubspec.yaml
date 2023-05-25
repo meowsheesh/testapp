@@ -39,7 +39,7 @@ dependencies:
   webview_flutter_android: ^3.7.1
   flutter_svg:
   percent_indicator: ^4.2.3
-  permission_handler: ^10.2.0
+#  permission_handler: ^10.2.0
   notification_permissions: ^0.6.1
 
 dev_dependencies:
